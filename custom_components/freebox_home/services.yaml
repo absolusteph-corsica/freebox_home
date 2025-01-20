@@ -1,4 +1,5 @@
 flip:
+  name: Flip camera
   description: Flip the camera image.
   fields:
     entity_id:
