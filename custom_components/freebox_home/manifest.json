@@ -5,9 +5,10 @@
   "documentation": "https://github.com/gvigroux/freebox_home",
   "issue_tracker": "https://github.com/gvigroux/freebox_home/issues",
   "requirements": ["freebox-api"],
-  "dependencies": ["ffmpeg"],
+  "dependencies": ["generic","ffmpeg"],
   "after_dependencies": ["zeroconf"],
   "zeroconf": ["_fbx-api._tcp.local."],
-  "codeowners": ["gvigroux"],
+  "codeowners": ["@gvigroux"],
+  "iot_class": "local_polling",
   "version": "0.8.1"
 }
