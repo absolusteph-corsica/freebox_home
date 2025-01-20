@@ -134,6 +134,8 @@ class FreeboxShutter(FreeboxBaseClass,CoverEntity):
 
     @property
     def device_class(self) -> str:
+        if("garage" in self._name.lower()):
+            return CoverDeviceClass.GARAGE
         return CoverDeviceClass.SHUTTER
 
     @property
@@ -154,22 +156,23 @@ class FreeboxShutter(FreeboxBaseClass,CoverEntity):
     async def async_set_cover_position(self, position, **kwargs):
         """Set cover position."""
         await self.set_home_endpoint_value(self._command_position, {"value": self.get_corrected_state(self._current_state)})
+        self._current_state = position
 
     async def async_open_cover(self, **kwargs):
         """Open cover."""
-        await self.set_home_endpoint_value(self._command_up, {"value": self.get_corrected_state(self._current_state)})
+        await self.set_home_endpoint_value(self._command_up, {"value": self.get_corrected_state(0)})
+        self._current_state = 0
 
     async def async_close_cover(self, **kwargs):
         """Close cover."""
-        await self.set_home_endpoint_value(self._command_down, {"value": self.get_corrected_state(self._current_state)})
+        await self.set_home_endpoint_value(self._command_down, {"value": self.get_corrected_state(100)})
+        self._current_state = 100
 
     async def async_stop_cover(self, **kwargs):
         """Stop cover."""
         await self.set_home_endpoint_value(self._command_stop, {"value": None})
-        self._state = None
+        self._current_state = None
 
     async def async_update(self):
         """Get the state & name and update it."""
-        node = self._router.nodes[self._id];
-        self._name = node["label"].strip()
         self._current_state = self.get_corrected_state(await self.get_home_endpoint_value(self._command_state))
