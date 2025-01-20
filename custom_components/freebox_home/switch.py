@@ -46,16 +46,8 @@ class FreeboxShutterInvertSwitchEntity(FreeboxBaseClass, SwitchEntity):
         self._attr_icon = "mdi:directions-fork"
         self._name = "Inverser commandes"
 
-        self._state = False
-        self._path  = get_path(hass, self._unique_id + '_InvertSwitch')
-        
-        try:
-            value = self._path.read_text()
-            if( value == "1"):
-                self._state = True
-        except OSError as e:
-            return
-
+        self._state = None
+        self._path  = get_path(hass, self._unique_id)
 
     @property
     def translation_key(self):
@@ -67,11 +59,11 @@ class FreeboxShutterInvertSwitchEntity(FreeboxBaseClass, SwitchEntity):
         return self._state
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        self._path.write_text('1')
+        await self._hass.async_add_executor_job(self._path.write_text, '1')
         self._state = True
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        self._path.write_text('0')
+        await self._hass.async_add_executor_job(self._path.write_text, '0')
         self._state = False
 
     @property
@@ -79,8 +71,12 @@ class FreeboxShutterInvertSwitchEntity(FreeboxBaseClass, SwitchEntity):
         """Return True if entity is available."""
         return True
 
-    @callback
-    def _handle_coordinator_update(self, update: bool = True) -> None:
-        self._attr_is_on = self.is_on
-        if update:
-            self.async_write_ha_state()
+    async def async_update(self) -> None:
+        try:
+            value = await self._hass.async_add_executor_job(self._path.read_text)
+            if( value == "1"):
+                self._state = True
+            else:
+                self._state = False
+        except OSError as e:
+            pass

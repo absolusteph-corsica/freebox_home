@@ -4,7 +4,7 @@ import logging
 from typing import Dict, Optional
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import Entity
-from .const import DOMAIN, VALUE_NOT_SET
+from .const import DOMAIN, VALUE_NOT_SET, DUMMY
 from .router import FreeboxRouter
 
 _LOGGER = logging.getLogger(__name__)
@@ -74,6 +74,9 @@ class FreeboxBaseClass(Entity):
         }
 
     async def set_home_endpoint_value(self, command_id, value):
+        #Dummy devices
+        if( self._id >= 1000 ) and (DUMMY): 
+            return True
         if( command_id == VALUE_NOT_SET ):
             _LOGGER.error("Unable to SET a value through the API. Command is VALUE_NOT_SET")
             return False
@@ -81,6 +84,9 @@ class FreeboxBaseClass(Entity):
         return True
 
     async def get_home_endpoint_value(self, command_id):
+        #Dummy devices
+        if( self._id >= 1000 ) and (DUMMY): 
+            return VALUE_NOT_SET
         if( command_id == VALUE_NOT_SET ):
             _LOGGER.error("Unable to GET a value through the API. Command is VALUE_NOT_SET")
             return VALUE_NOT_SET
