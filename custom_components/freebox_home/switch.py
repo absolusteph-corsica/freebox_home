@@ -10,6 +10,7 @@ from homeassistant.util import slugify
 from homeassistant.core import callback
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components.switch import SwitchEntityDescription, SwitchEntity
+from homeassistant.helpers.entity_registry import async_get
 
 from .router import (get_path)
 
@@ -40,14 +41,16 @@ class FreeboxShutterInvertSwitchEntity(FreeboxBaseClass, SwitchEntity):
     _attr_has_entity_name = True
 
     def __init__(self, hass, router, node):
-        super().__init__(hass, router, node)
+        super().__init__(hass, router, node)        
 
-        self._unique_id = f"{self._router.mac}-node_{self._id}" + '_InvertSwitch'
+        self._unique_id = self._unique_id + '_InvertSwitch'
         self._attr_icon = "mdi:directions-fork"
         self._name = "Inverser commandes"
 
-        self._state = None
+        self._state = False
         self._path  = get_path(hass, self._unique_id)
+
+
 
     @property
     def translation_key(self):

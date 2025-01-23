@@ -5,7 +5,7 @@ from homeassistant.util import slugify
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.components.cover import CoverEntity, CoverDeviceClass
-from .const import DOMAIN
+from .const import DOMAIN, DUMMY, VALUE_NOT_SET
 from .base_class import FreeboxBaseClass
 from homeassistant.helpers.entity_registry import async_get
 
@@ -32,7 +32,6 @@ async def async_setup_entry(hass, entry, async_add_entities):
             entities.append(FreeboxShutter(hass, router, node))
 
     async_add_entities(entities, True)
-
 
 
 class FreeboxBasicShutter(FreeboxBaseClass,CoverEntity):
@@ -111,7 +110,7 @@ class FreeboxShutter(FreeboxBaseClass,CoverEntity):
         self._command_toggle = self.get_command_id(node['show_endpoints'], "slot", "toggle")
         self._command_state = self.get_command_id(node['type']['endpoints'], "signal", "position_set")
         self._current_state = self.get_node_value(node['show_endpoints'], "signal", "state")
-        
+
         # Go over all entities to find the switch
         self._invert_entity_id = None
         entity_registry = async_get(hass)
@@ -119,16 +118,22 @@ class FreeboxShutter(FreeboxBaseClass,CoverEntity):
             if (entity.unique_id == self.unique_id + "_InvertSwitch"):
                 self._invert_entity_id = entity.entity_id
 
+
+
     def get_corrected_state(self, value):
         if(self._invert_entity_id == None):
             return value
-        state = self._hass.states.get(self._invert_entity_id)
         if( value == None ):
-            return None
+            return value
+        state = self._hass.states.get(self._invert_entity_id)
         if( state == None ):
-            return None
-        if( state.state == "on" ):
+            return value
+        if( state.state == "off" ):
+            if( DUMMY ):
+                _LOGGER.error("Value converted from " + str(value) + " to " + str(100 - value))
             return 100 - value
+        if( DUMMY ):
+            _LOGGER.error("Value " + str(value))
         return value
     
 
@@ -161,12 +166,12 @@ class FreeboxShutter(FreeboxBaseClass,CoverEntity):
     async def async_open_cover(self, **kwargs):
         """Open cover."""
         await self.set_home_endpoint_value(self._command_up, {"value": self.get_corrected_state(0)})
-        self._current_state = 0
+        self._current_state = 100
 
     async def async_close_cover(self, **kwargs):
         """Close cover."""
         await self.set_home_endpoint_value(self._command_down, {"value": self.get_corrected_state(100)})
-        self._current_state = 100
+        self._current_state = 0
 
     async def async_stop_cover(self, **kwargs):
         """Stop cover."""
@@ -175,4 +180,7 @@ class FreeboxShutter(FreeboxBaseClass,CoverEntity):
 
     async def async_update(self):
         """Get the state & name and update it."""
-        self._current_state = self.get_corrected_state(await self.get_home_endpoint_value(self._command_state))
+        if( DUMMY ):
+            _LOGGER.error("Current state: " + str(self._current_state) + " Freebox: " + str(self.get_corrected_state(self._current_state)))
+        else:
+            self._current_state = self.get_corrected_state(await self.get_home_endpoint_value(self._command_state))
