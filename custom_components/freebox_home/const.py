@@ -13,7 +13,7 @@ APP_DESC = {
     "device_name": socket.gethostname(),
 }
 
-DUMMY = True
+DUMMY = False
 
 # to store the cookie
 STORAGE_KEY = DOMAIN
