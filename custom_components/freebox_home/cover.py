@@ -164,7 +164,7 @@ class FreeboxShutter(FreeboxBaseClass,CoverEntity):
 
     async def async_set_cover_position(self, position, **kwargs):
         """Set cover position."""
-        await self.set_home_endpoint_value(self._command_position, {"value": self.get_corrected_state(self._current_state)})
+        await self.set_home_endpoint_value(self._command_position, {"value": self.get_corrected_state(position)})
         self._current_state = position
 
     async def async_open_cover(self, **kwargs):
