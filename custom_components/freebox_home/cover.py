@@ -119,16 +119,20 @@ class FreeboxShutter(FreeboxBaseClass,CoverEntity):
                 self._invert_entity_id = entity.entity_id
 
 
-
-    def get_corrected_state(self, value):
+    def get_invert_status(self):
         if(self._invert_entity_id == None):
-            return value
-        if( value == None ):
-            return value
+            return False
         state = self._hass.states.get(self._invert_entity_id)
         if( state == None ):
+            return False
+        if( state.state == "on" ):
+            return True
+        return False
+
+    def get_corrected_state(self, value):
+        if( value == None ):
             return value
-        if( state.state == "off" ):
+        if( self.get_invert_status() ):
             if( DUMMY ):
                 _LOGGER.error("Value converted from " + str(value) + " to " + str(100 - value))
             return 100 - value
@@ -165,22 +169,28 @@ class FreeboxShutter(FreeboxBaseClass,CoverEntity):
 
     async def async_open_cover(self, **kwargs):
         """Open cover."""
-        await self.set_home_endpoint_value(self._command_up, {"value": self.get_corrected_state(0)})
+        if( self.get_invert_status() == False ):
+            await self.set_home_endpoint_value(self._command_up, {"value": 0})
+        else:
+            await self.set_home_endpoint_value(self._command_down, {"value": 100})
         self._current_state = 100
 
     async def async_close_cover(self, **kwargs):
         """Close cover."""
-        await self.set_home_endpoint_value(self._command_down, {"value": self.get_corrected_state(100)})
+        if( self.get_invert_status() == True ):
+            await self.set_home_endpoint_value(self._command_up, {"value": 0})
+        else:
+            await self.set_home_endpoint_value(self._command_down, {"value": 100})
         self._current_state = 0
 
     async def async_stop_cover(self, **kwargs):
         """Stop cover."""
         await self.set_home_endpoint_value(self._command_stop, {"value": None})
-        self._current_state = None
+        self._current_state = 50
 
     async def async_update(self):
         """Get the state & name and update it."""
-        if( DUMMY ):
+        if( self._id >= 1000 ) and (DUMMY): 
             _LOGGER.error("Current state: " + str(self._current_state) + " Freebox: " + str(self.get_corrected_state(self._current_state)))
         else:
             self._current_state = self.get_corrected_state(await self.get_home_endpoint_value(self._command_state))
